@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { PDFParse } from 'pdf-parse';
 import { env } from '../config/env.js';
 import { openSearchClient } from '../opensearch/client.js';
 import { getContentType, resolveAllowedDocumentPath } from '../utils/fileSafety.js';
@@ -16,6 +17,21 @@ async function documentExists(fileName) {
   });
 
   return response.body.count > 0;
+}
+
+async function extractDocumentContent(resolvedPath, contentBuffer) {
+  if (path.extname(resolvedPath).toLowerCase() !== '.pdf') {
+    return contentBuffer.toString('utf8');
+  }
+
+  const parser = new PDFParse({ data: contentBuffer });
+
+  try {
+    const result = await parser.getText();
+    return (result.text || '').trim();
+  } finally {
+    await parser.destroy();
+  }
 }
 
 export async function ingestDocuments({ fileLocation }) {
@@ -43,7 +59,7 @@ export async function ingestDocuments({ fileLocation }) {
   }
 
   const contentBuffer = await fs.readFile(resolvedPath);
-  const content = contentBuffer.toString('utf8');
+  const content = await extractDocumentContent(resolvedPath, contentBuffer);
   const id = crypto.createHash('sha256').update(fileName).digest('hex');
   const now = new Date().toISOString();
 
