@@ -13,9 +13,11 @@
   "dependencies": {
     "@apollo/server": "^5.5.1",
     "@opensearch-project/opensearch": "^2.13.0",
+    "docx": "^9.6.1",
     "dotenv": "^16.4.7",
     "graphql": "^16.10.0",
-    "pdf-parse": "^2.4.5"
+    "pdf-parse": "^2.4.5",
+    "pdfkit": "^0.18.0"
   },
   "engines": {
     "node": ">=20"

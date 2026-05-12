@@ -48,9 +48,11 @@ curl -s http://localhost:4000/graphql \
 After verification, the agent should ask for one of these:
 
 - A file address/path under `DOCUMENT_ROOT` to ingest with `ingestDocuments`.
-- A document type or output medium to create from indexed material, such as `plain_text`, `markdown`, `pdf`, `email`, `memo`, `brief`, or `motion`.
+- A document type or output medium to create from indexed material, such as `plain_text`, `markdown`, `pdf`, `docx`, `email`, `memo`, `brief`, or `motion`.
+- A final export format for saved files: PDF or Word (`.docx`).
 
 If you provide both, the agent should ingest the file first, then call `ragReferenceBundle` and use the returned OpenSearch data as RAG context for the requested output.
+Before writing a final file, the agent should ask whether you want the response exported as PDF or Word unless you already specified the format.
 
 ## Local Development
 
@@ -117,9 +119,12 @@ query {
     query: "complaint"
     requestedText: "Draft a short filing summary"
     medium: "memo"
+    exportFormat: "pdf"
     limit: 3
   ) {
     medium
+    exportFormat
+    supportedExportFormats
     codexInstructions
     documents {
       fileName
@@ -131,7 +136,30 @@ query {
 }
 ```
 
-Supported medium values include `plain_text`, `markdown`, `pdf`, `email`, `memo`, `brief`, and `motion`. Unknown values fall back to `markdown`.
+Supported medium values include `plain_text`, `markdown`, `pdf`, `docx`, `word`, `email`, `memo`, `brief`, and `motion`. Unknown values fall back to `markdown`.
+
+## Export Generated Text
+
+Use `exportGeneratedDocument` after Codex has generated the text and the user has confirmed a final export format. The server parses simple generated text into headings, paragraphs, and bullets, then writes PDF or Word output under `EXPORT_OUTPUT_ROOT` or `./generated`.
+
+```graphql
+mutation {
+  exportGeneratedDocument(
+    title: "Civil Rights Thesis"
+    format: "docx"
+    fileName: "civil-rights-thesis"
+    text: "Civil Rights Thesis\n\nThis is the generated response text."
+  ) {
+    format
+    fileName
+    filePath
+    contentType
+    sizeBytes
+  }
+}
+```
+
+Supported export formats are `pdf`, `docx`, and `word` as an alias for `docx`.
 
 ## Deploy In Another Environment
 

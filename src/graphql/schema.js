@@ -33,8 +33,18 @@ export const typeDefs = `#graphql
     query: String!
     requestedText: String!
     medium: String!
+    exportFormat: String
+    supportedExportFormats: [String!]!
     codexInstructions: String!
     documents: [LegalDocument!]!
+  }
+
+  type ExportResult {
+    format: String!
+    fileName: String!
+    filePath: String!
+    contentType: String!
+    sizeBytes: Int!
   }
 
   type Query {
@@ -44,11 +54,18 @@ export const typeDefs = `#graphql
       query: String
       requestedText: String
       medium: String = "markdown"
+      exportFormat: String
       limit: Int = 10
     ): RagReferenceBundle!
   }
 
   type Mutation {
     ingestDocuments(fileLocation: String!): IngestionResult!
+    exportGeneratedDocument(
+      title: String
+      text: String!
+      format: String!
+      fileName: String
+    ): ExportResult!
   }
 `;
