@@ -45,7 +45,7 @@ function buildCodexInstructions({ requestedText, medium, documents }) {
   return [
     'Use the returned OpenSearch documents as retrieval context for a RAG-style answer.',
     `Requested output medium: ${profile.label}.`,
-    `User request: ${requestedText || 'Generate the requested legal reference text from the retrieved material.'}`,
+    `User request: ${requestedText || 'Generate the requested local document text from the retrieved material.'}`,
     profile.guidance,
     'Do not invent facts not supported by the returned documents.',
     'When a source materially supports a statement, identify the supporting file name.',

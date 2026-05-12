@@ -23,7 +23,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('Failed to start legal reference service.');
+  console.error('Failed to start Local-Document-Persistor service.');
   console.error(error);
   process.exit(1);
 });

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository is a Node.js server application for legal reference retrieval and ingestion. Codex agents must preserve the accepted stack and architecture unless the user explicitly approves a change.
+This repository is a Node.js server application for local document retrieval and ingestion. Codex agents must preserve the accepted stack and architecture unless the user explicitly approves a change.
 
 ## Accepted Stack
 
@@ -46,7 +46,7 @@ Do not add REST endpoints, databases, queues, ORMs, alternate search engines, or
 
 ## Existing Flows
 
-1. Retrieval flow: Codex calls GraphQL `legalDocuments`; the resolver delegates to the search service; OpenSearch returns matching documents for legal reference use.
+1. Retrieval flow: Codex calls GraphQL `legalDocuments`; the resolver delegates to the search service; OpenSearch returns matching documents for local document use.
 2. Ingestion flow: Codex calls GraphQL `ingestDocuments`; the service resolves the file under `DOCUMENT_ROOT`; OpenSearch is checked for the file name; existing files are skipped and new files are indexed.
 3. RAG reference flow: Codex calls GraphQL `ragReferenceBundle` with a search query, requested text, and output medium; the server returns index data plus Codex-ready instructions, Codex generates the substantive text from the returned references, and server logic parses/formats the generated text into the requested medium when needed.
 

@@ -1,7 +1,7 @@
 {
-  "name": "legal-reference-server",
+  "name": "local-document-persistor",
   "version": "1.0.0",
-  "description": "GraphQL service for legal reference document retrieval and OpenSearch-backed ingestion.",
+  "description": "GraphQL service for local document retrieval and OpenSearch-backed ingestion.",
   "type": "module",
   "main": "src/index.js",
   "scripts": {

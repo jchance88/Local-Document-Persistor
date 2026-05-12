@@ -6,7 +6,7 @@ export const resolvers = {
   Query: {
     health: () => ({
       ok: true,
-      service: 'legal-reference-server'
+      service: 'Local-Document-Persistor'
     }),
     legalDocuments: (_parent, args) => searchLegalDocuments(args),
     ragReferenceBundle: (_parent, args) => getRagReferenceBundle(args)

@@ -1,6 +1,6 @@
-# Legal Reference Server
+# Local-Document-Persistor
 
-Node.js GraphQL service backed by OpenSearch for legal reference document retrieval and ingestion.
+Node.js GraphQL service backed by OpenSearch for local document retrieval and ingestion.
 
 ## Architecture
 
@@ -28,7 +28,7 @@ You need a Docker-compatible runtime for the one-shot deployment. On macOS, Dock
 Ask the coding agent to deploy the app from the repository root:
 
 ```text
-Deploy this legal-reference-server app. Use AGENTS.md, start Docker/OpenSearch, run the deployment script, verify GraphQL health, then ask me whether I want to ingest a file or create a document from indexed material.
+Deploy this Local-Document-Persistor app. Use AGENTS.md, start Docker/OpenSearch, run the deployment script, verify GraphQL health, then ask me whether I want to ingest a file or create a document from indexed material.
 ```
 
 The coding agent should run:
