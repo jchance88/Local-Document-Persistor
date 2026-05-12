@@ -1,0 +1,48 @@
+services:
+  api:
+    build: .
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 4000
+      OPENSEARCH_NODE: http://opensearch:9200
+      OPENSEARCH_USERNAME: ${OPENSEARCH_USERNAME:-}
+      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD:-}
+      OPENSEARCH_INDEX: ${OPENSEARCH_INDEX:-legal_documents}
+      OPENSEARCH_TLS_REJECT_UNAUTHORIZED: ${OPENSEARCH_TLS_REJECT_UNAUTHORIZED:-true}
+      DOCUMENT_ROOT: /documents
+      MAX_INGEST_BYTES: ${MAX_INGEST_BYTES:-10485760}
+    ports:
+      - "${PORT:-4000}:4000"
+    volumes:
+      - ./sample-documents:/documents:ro
+
+  opensearch:
+    image: opensearchproject/opensearch:2.15.0
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "LocalOnly123!"
+      bootstrap.memory_lock: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "9200:9200"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  opensearch-data:

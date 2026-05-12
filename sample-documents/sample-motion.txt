@@ -1,0 +1,4 @@
+Sample Motion for Reference
+
+This placeholder document represents legal reference material for local ingestion tests.
+Replace this file with real source material mounted into the DOCUMENT_ROOT volume.

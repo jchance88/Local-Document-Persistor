@@ -1,0 +1,23 @@
+{
+  "name": "legal-reference-server",
+  "version": "1.0.0",
+  "description": "GraphQL service for legal reference document retrieval and OpenSearch-backed ingestion.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "./scripts/dev.sh",
+    "deploy": "./scripts/deploy.sh",
+    "shutdown": "./scripts/shutdown.sh",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@apollo/server": "^5.5.1",
+    "@opensearch-project/opensearch": "^2.13.0",
+    "dotenv": "^16.4.7",
+    "graphql": "^16.10.0",
+    "pdf-parse": "^2.4.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
