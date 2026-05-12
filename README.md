@@ -88,7 +88,7 @@ The default Docker Compose file mounts `./sample-documents` to `/documents`.
 
 ```graphql
 mutation {
-  ingestDocuments(fileLocation: "sample-motion.txt", force: false) {
+  ingestDocuments(fileLocation: "sample-motion.txt") {
     fileName
     status
     reason
@@ -96,7 +96,7 @@ mutation {
 }
 ```
 
-Set `force: true` to delete existing indexed records with the same `fileName` and reindex the file, which is useful after parser or chunking changes.
+Ingestion skips existing indexed records with the same `fileName` by default. Use `force: true` only when you intentionally want to delete existing indexed records for that file and reindex it, such as after parser or chunking changes.
 
 ## Query Reference Documents
 
