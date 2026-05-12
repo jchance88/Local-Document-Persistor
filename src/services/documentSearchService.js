@@ -1,26 +1,57 @@
 import { env } from '../config/env.js';
 import { openSearchClient } from '../opensearch/client.js';
 
-export async function searchLegalDocuments({ query, fileName, limit = 10, includeHighlights = true }) {
+function normalizeQueries({ query, queries }) {
+  return [
+    ...(Array.isArray(queries) ? queries : []),
+    query
+  ]
+    .map((value) => (value || '').trim())
+    .filter(Boolean);
+}
+
+export async function searchLegalDocuments({ query, queries, fileName, limit = 10, includeHighlights = true }) {
   const size = Math.min(Math.max(limit, 1), 50);
   const must = [];
+  const filter = [];
+  const should = [];
+  const normalizedQueries = normalizeQueries({ query, queries });
 
-  if (query) {
-    must.push({
+  for (const value of normalizedQueries) {
+    should.push({
       multi_match: {
-        query,
-        fields: ['title^3', 'content']
+        query: value,
+        fields: [
+          'title^4',
+          'fileName^3',
+          'heading^3',
+          'keywords^2',
+          'content'
+        ],
+        type: 'best_fields',
+        operator: 'or'
       }
     });
   }
 
   if (fileName) {
-    must.push({ term: { fileName } });
+    filter.push({ term: { fileName } });
+  }
+
+  if (should.length) {
+    must.push({
+      bool: {
+        should,
+        minimum_should_match: 1
+      }
+    });
   }
 
   const body = {
     size,
-    query: must.length ? { bool: { must } } : { match_all: {} }
+    query: must.length || filter.length
+      ? { bool: { must, filter } }
+      : { match_all: {} }
   };
 
   if (includeHighlights) {

@@ -36,6 +36,7 @@ async function listIndexedDocumentSummaries(limit = 25) {
     body: {
       size,
       sort: [{ ingestedAt: { order: 'desc' } }],
+      collapse: { field: 'fileName' },
       query: { match_all: {} },
       _source: [
         'fileName',
@@ -67,9 +68,28 @@ function buildOpenSearchTemplate({ semanticRequest }) {
       bool: {
         must: [
           {
-            multi_match: {
-              query: '<codex-generated retrieval query>',
-              fields: ['title^3', 'content']
+            bool: {
+              should: [
+                {
+                  multi_match: {
+                    query: '<codex-generated broad concept query>',
+                    fields: ['title^4', 'fileName^3', 'heading^3', 'keywords^2', 'content']
+                  }
+                },
+                {
+                  multi_match: {
+                    query: '<codex-generated legal terminology query>',
+                    fields: ['title^4', 'fileName^3', 'heading^3', 'keywords^2', 'content']
+                  }
+                },
+                {
+                  multi_match: {
+                    query: '<codex-generated synonym/procedure query>',
+                    fields: ['title^4', 'fileName^3', 'heading^3', 'keywords^2', 'content']
+                  }
+                }
+              ],
+              minimum_should_match: 1
             }
           }
         ]
@@ -117,12 +137,13 @@ function buildCodexInstructions({
     '',
     'Steps:',
     '1. Inspect the available document filenames, titles, and previews.',
-    '2. Generate a concise retrieval query using the vocabulary most likely to appear in the indexed documents.',
-    '3. Prefer a plain query string that can be passed to ragReferenceBundle(query: ...).',
-    '4. If a specific file is clearly the best source, include that fileName when calling ragReferenceBundle.',
-    '5. Call ragReferenceBundle with the generated query, the requested final result, the desired medium, and exportFormat if known.',
-    '6. Use the documents returned by ragReferenceBundle as the authoritative context for the final answer.',
-    '7. Do not invent facts not supported by the retrieved documents; state limitations when the documents do not directly address the user request.',
+    '2. Generate 3-5 concise retrieval queries using vocabulary most likely to appear in the indexed documents.',
+    '3. Include a broad concept query, a legal terminology query, and a synonym/procedure query.',
+    '4. Pass those queries to ragReferenceBundle(queries: [...]) so OpenSearch can run multi-query BM25 retrieval over titles, filenames, headings, keywords, and chunk content.',
+    '5. If a specific file is clearly the best source, include that fileName when calling ragReferenceBundle.',
+    '6. Rerank the returned chunks by direct relevance before drafting; prioritize high-scoring chunks with matching headings, keywords, or highlights.',
+    '7. Use the documents returned by ragReferenceBundle as the authoritative context for the final answer.',
+    '8. Do not invent facts not supported by the retrieved documents; state limitations when the documents do not directly address the user request.',
     '',
     'OpenSearch query shape used by this app:',
     buildOpenSearchTemplate({ semanticRequest }),

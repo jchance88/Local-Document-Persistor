@@ -24,6 +24,8 @@ export const env = {
   },
   documents: {
     root: process.env.DOCUMENT_ROOT || '/documents',
-    maxIngestBytes: toInteger(process.env.MAX_INGEST_BYTES, 10 * 1024 * 1024)
+    maxIngestBytes: toInteger(process.env.MAX_INGEST_BYTES, 10 * 1024 * 1024),
+    chunkSize: toInteger(process.env.DOCUMENT_CHUNK_SIZE, 3500),
+    chunkOverlap: toInteger(process.env.DOCUMENT_CHUNK_OVERLAP, 400)
   }
 };

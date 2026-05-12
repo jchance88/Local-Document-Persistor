@@ -7,11 +7,19 @@ export const typeDefs = `#graphql
   type LegalDocument {
     id: ID!
     score: Float
+    recordType: String
+    documentId: String
+    chunkId: String
+    chunkIndex: Int
+    chunkCount: Int
     fileName: String!
     filePath: String!
     title: String!
+    heading: String
+    keywords: [String!]
     content: String!
     contentType: String!
+    textLength: Int
     sizeBytes: Int!
     ingestedAt: String!
     highlights: [String!]!
@@ -71,9 +79,10 @@ export const typeDefs = `#graphql
 
   type Query {
     health: Health!
-    legalDocuments(query: String, fileName: String, limit: Int = 10): [LegalDocument!]!
+    legalDocuments(query: String, queries: [String!], fileName: String, limit: Int = 10): [LegalDocument!]!
     ragReferenceBundle(
       query: String
+      queries: [String!]
       requestedText: String
       medium: String = "markdown"
       exportFormat: String
@@ -89,7 +98,7 @@ export const typeDefs = `#graphql
   }
 
   type Mutation {
-    ingestDocuments(fileLocation: String!): IngestionResult!
+    ingestDocuments(fileLocation: String!, force: Boolean = false): IngestionResult!
     exportGeneratedDocument(
       title: String
       text: String!

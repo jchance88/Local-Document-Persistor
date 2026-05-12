@@ -43,6 +43,7 @@ Do not add REST endpoints, databases, queues, ORMs, alternate search engines, or
 - Search behavior must go through OpenSearch; do not scan local files to answer retrieval queries.
 - RAG-style generation support must return OpenSearch-sourced context and Codex instructions; do not add an LLM provider unless the user explicitly approves expanding the stack.
 - For broad semantic requests, call `semanticQueryPlanBundle` first so Codex can inspect indexed document summaries and generate the best OpenSearch retrieval query before calling `ragReferenceBundle`.
+- Semantic matching is Phase 1 lexical RAG: documents are chunked at ingestion, chunks include headings and extracted keywords, OpenSearch runs BM25 over boosted fields, Codex expands semantic requests into multiple legal/keyword queries, and Codex reranks returned chunks before drafting.
 - Do not create standalone generator scripts or new one-off files to generate requested prose.
 - Treat the selected Codex model as the lightweight RAG generation resource: retrieve context through the server, let Codex draft the requested text from that context, and keep server logic focused on parsing, validating, and formatting that model-generated text into the requested medium.
 - If a requested output needs a format such as PDF or Word, the app must use reusable server formatting/parsing logic rather than file-specific generation scripts.
@@ -51,8 +52,8 @@ Do not add REST endpoints, databases, queues, ORMs, alternate search engines, or
 ## Existing Flows
 
 1. Retrieval flow: Codex calls GraphQL `legalDocuments`; the resolver delegates to the search service; OpenSearch returns matching documents for local document use.
-2. Ingestion flow: Codex calls GraphQL `ingestDocuments`; the service resolves the file under `DOCUMENT_ROOT`; OpenSearch is checked for the file name; existing files are skipped and new files are indexed.
-3. RAG reference flow: Codex calls GraphQL `ragReferenceBundle` with a search query, requested text, output medium, and optional export format; the server returns index data plus Codex-ready instructions, Codex generates the substantive text from the returned references, and server logic parses/formats the generated text into PDF or Word when requested.
+2. Ingestion flow: Codex calls GraphQL `ingestDocuments`; the service resolves the file under `DOCUMENT_ROOT`; OpenSearch is checked for the file name; existing files are skipped unless `force: true` is provided, and new or forced files are parsed, chunked, enriched with headings/keywords, and indexed.
+3. RAG reference flow: Codex calls GraphQL `ragReferenceBundle` with one or more search queries, requested text, output medium, and optional export format; the server returns ranked chunks plus Codex-ready instructions, Codex reranks the chunks for direct relevance, generates the substantive text from the returned references, and server logic parses/formats the generated text into PDF or Word when requested.
 4. Export flow: Codex calls GraphQL `exportGeneratedDocument` after generating text and confirming the user's desired final format. The export service writes the formatted file under `EXPORT_OUTPUT_ROOT` or `./generated`.
 5. Semantic query planning flow: Codex calls GraphQL `semanticQueryPlanBundle` when the user describes the context they want in natural language. The server returns indexed document summaries, an OpenSearch query template, and instructions for Codex to generate the retrieval query to pass into `ragReferenceBundle`.
 

@@ -59,10 +59,16 @@ function normalizeExportFormat(exportFormat) {
   return supportedExportFormats.includes(normalized) ? normalized : null;
 }
 
-function buildCodexInstructions({ requestedText, medium, exportFormat, documents }) {
+function buildCodexInstructions({ requestedText, medium, exportFormat, queries, documents }) {
   const profile = mediumProfiles[medium];
   const sourceList = documents
-    .map((document, index) => `${index + 1}. ${document.fileName} (${document.title})`)
+    .map((document, index) => {
+      const chunkLabel = Number.isInteger(document.chunkIndex)
+        ? ` chunk ${document.chunkIndex + 1} of ${document.chunkCount}`
+        : '';
+      const heading = document.heading ? `; heading: ${document.heading}` : '';
+      return `${index + 1}. ${document.fileName}${chunkLabel} (${document.title}${heading})`;
+    })
     .join('\n');
   const exportGuidance = exportFormat
     ? `After drafting, call exportGeneratedDocument with format "${exportFormat}" if the user wants a saved file.`
@@ -72,9 +78,11 @@ function buildCodexInstructions({ requestedText, medium, exportFormat, documents
     'Use the returned OpenSearch documents as retrieval context for a RAG-style answer.',
     `Requested output medium: ${profile.label}.`,
     `Supported export formats: ${supportedExportFormats.join(', ')}.`,
+    `Retrieval queries used: ${queries.length ? queries.join(' | ') : 'match all / unspecified'}.`,
     `User request: ${requestedText || 'Generate the requested local document text from the retrieved material.'}`,
     profile.guidance,
     exportGuidance,
+    'Treat the returned records as ranked document chunks. Prefer statements supported by the highest-scoring chunks and rerank snippets for direct relevance before drafting.',
     'Do not invent facts not supported by the returned documents.',
     'When a source materially supports a statement, identify the supporting file name.',
     'If the returned documents are insufficient, say what is missing instead of filling the gap.',
@@ -84,13 +92,27 @@ function buildCodexInstructions({ requestedText, medium, exportFormat, documents
   ].join('\n');
 }
 
-export async function getRagReferenceBundle({ query, requestedText, medium, exportFormat, limit = 10 }) {
+function normalizeQueries({ query, queries }) {
+  return [
+    ...(Array.isArray(queries) ? queries : []),
+    query
+  ]
+    .map((value) => (value || '').trim())
+    .filter(Boolean);
+}
+
+export async function getRagReferenceBundle({ query, queries, requestedText, medium, exportFormat, limit = 10 }) {
   const normalizedMedium = normalizeMedium(medium);
   const normalizedExportFormat = normalizeExportFormat(exportFormat);
-  const documents = await searchLegalDocuments({ query, limit, includeHighlights: false });
+  const normalizedQueries = normalizeQueries({ query, queries });
+  const documents = await searchLegalDocuments({
+    queries: normalizedQueries,
+    limit,
+    includeHighlights: true
+  });
 
   return {
-    query: query || '',
+    query: normalizedQueries[0] || '',
     requestedText: requestedText || '',
     medium: normalizedMedium,
     exportFormat: normalizedExportFormat,
@@ -99,6 +121,7 @@ export async function getRagReferenceBundle({ query, requestedText, medium, expo
       requestedText,
       medium: normalizedMedium,
       exportFormat: normalizedExportFormat,
+      queries: normalizedQueries,
       documents
     }),
     documents
