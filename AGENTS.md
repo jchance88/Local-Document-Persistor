@@ -42,6 +42,7 @@ Do not add REST endpoints, databases, queues, ORMs, alternate search engines, or
 - File ingestion must stay constrained to `DOCUMENT_ROOT`.
 - Search behavior must go through OpenSearch; do not scan local files to answer retrieval queries.
 - RAG-style generation support must return OpenSearch-sourced context and Codex instructions; do not add an LLM provider unless the user explicitly approves expanding the stack.
+- For broad semantic requests, call `semanticQueryPlanBundle` first so Codex can inspect indexed document summaries and generate the best OpenSearch retrieval query before calling `ragReferenceBundle`.
 - Do not create standalone generator scripts or new one-off files to generate requested prose.
 - Treat the selected Codex model as the lightweight RAG generation resource: retrieve context through the server, let Codex draft the requested text from that context, and keep server logic focused on parsing, validating, and formatting that model-generated text into the requested medium.
 - If a requested output needs a format such as PDF or Word, the app must use reusable server formatting/parsing logic rather than file-specific generation scripts.
@@ -53,6 +54,7 @@ Do not add REST endpoints, databases, queues, ORMs, alternate search engines, or
 2. Ingestion flow: Codex calls GraphQL `ingestDocuments`; the service resolves the file under `DOCUMENT_ROOT`; OpenSearch is checked for the file name; existing files are skipped and new files are indexed.
 3. RAG reference flow: Codex calls GraphQL `ragReferenceBundle` with a search query, requested text, output medium, and optional export format; the server returns index data plus Codex-ready instructions, Codex generates the substantive text from the returned references, and server logic parses/formats the generated text into PDF or Word when requested.
 4. Export flow: Codex calls GraphQL `exportGeneratedDocument` after generating text and confirming the user's desired final format. The export service writes the formatted file under `EXPORT_OUTPUT_ROOT` or `./generated`.
+5. Semantic query planning flow: Codex calls GraphQL `semanticQueryPlanBundle` when the user describes the context they want in natural language. The server returns indexed document summaries, an OpenSearch query template, and instructions for Codex to generate the retrieval query to pass into `ragReferenceBundle`.
 
 ## One-Shot Deployment For Codex
 
@@ -71,6 +73,7 @@ After deployment is healthy, Codex must prompt the user for the next workflow be
 3. If the user wants document creation, ask what type of document or medium they want, such as `plain_text`, `markdown`, `pdf`, `docx`, `email`, `memo`, `brief`, or `motion`; then ask what final export format they want, PDF or Word, unless they already specified it.
 4. If the user gives both a file path and a document type up front, ingest first, then retrieve RAG context and generate the requested output.
 5. If the user wants a saved final file, call `exportGeneratedDocument` with the generated text and confirmed format.
+6. If the user describes desired context semantically rather than giving search terms, call `semanticQueryPlanBundle`, use its inventory and instructions to create the retrieval query, then call `ragReferenceBundle` and generate the final response from that returned context.
 
 Do not assume the user's next step after deployment. Always gather either a file address/path or the requested document type/medium, and ask for the export format before writing a final file.
 

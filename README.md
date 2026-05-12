@@ -138,6 +138,39 @@ query {
 
 Supported medium values include `plain_text`, `markdown`, `pdf`, `docx`, `word`, `email`, `memo`, `brief`, and `motion`. Unknown values fall back to `markdown`.
 
+## Plan A Semantic Retrieval Query
+
+Use `semanticQueryPlanBundle` when the user describes the kind of context they want, but does not know the best search terms. The server returns indexed document summaries and an OpenSearch query template. Codex uses that inventory to generate a retrieval query, then calls `ragReferenceBundle` with the generated query and uses that response for the final result.
+
+```graphql
+query {
+  semanticQueryPlanBundle(
+    semanticRequest: "Find documents about prisoner access to civil rights claims and court accountability"
+    requestedText: "Write a two-page thesis"
+    medium: "pdf"
+    exportFormat: "pdf"
+    limit: 10
+  ) {
+    semanticRequest
+    opensearchQueryTemplate
+    codexInstructions
+    documents {
+      fileName
+      title
+      preview
+    }
+  }
+}
+```
+
+Recommended Codex flow:
+
+1. Call `semanticQueryPlanBundle` with the user's natural-language context request.
+2. Generate the best OpenSearch retrieval query from the returned document inventory.
+3. Call `ragReferenceBundle` with that generated query.
+4. Generate the final answer from the documents returned by `ragReferenceBundle`.
+5. Ask for PDF or Word if the user has not specified a final export format, then call `exportGeneratedDocument`.
+
 ## Export Generated Text
 
 Use `exportGeneratedDocument` after Codex has generated the text and the user has confirmed a final export format. The server parses simple generated text into headings, paragraphs, and bullets, then writes PDF or Word output under `EXPORT_OUTPUT_ROOT` or `./generated`.

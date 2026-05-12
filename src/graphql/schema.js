@@ -39,6 +39,28 @@ export const typeDefs = `#graphql
     documents: [LegalDocument!]!
   }
 
+  type IndexedDocumentSummary {
+    id: ID!
+    score: Float
+    fileName: String!
+    title: String!
+    contentType: String!
+    sizeBytes: Int!
+    ingestedAt: String!
+    preview: String!
+  }
+
+  type SemanticQueryPlanBundle {
+    semanticRequest: String!
+    requestedText: String!
+    medium: String!
+    exportFormat: String
+    supportedExportFormats: [String!]!
+    opensearchQueryTemplate: String!
+    codexInstructions: String!
+    documents: [IndexedDocumentSummary!]!
+  }
+
   type ExportResult {
     format: String!
     fileName: String!
@@ -57,6 +79,13 @@ export const typeDefs = `#graphql
       exportFormat: String
       limit: Int = 10
     ): RagReferenceBundle!
+    semanticQueryPlanBundle(
+      semanticRequest: String!
+      requestedText: String
+      medium: String = "markdown"
+      exportFormat: String
+      limit: Int = 25
+    ): SemanticQueryPlanBundle!
   }
 
   type Mutation {
